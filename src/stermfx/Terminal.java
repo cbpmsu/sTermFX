@@ -36,6 +36,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.util.Duration;
 import javax.swing.Timer;
 import stermfx.comms.CommPortInterface;
@@ -53,40 +55,31 @@ public class Terminal implements Initializable
     TextArea terminalTA;
     @FXML
     Button button;
+//    @FXML
+//    WebView myWebView;
     Timer caretTimer;
     CommPortInterface cpi;
+    String terminalBuffer;
+    boolean terminalBufferDirty;
 
     @Override
     public void initialize(URL url, ResourceBundle rb)
     {
+        terminalBuffer = "";
+        terminalBufferDirty = false;
+
         caretTimer = new Timer(500, new ActionListener()
         {
 
             @Override
             public void actionPerformed(java.awt.event.ActionEvent ae)
             {
-                if (terminalTA.getSelectedText().length() > 0)
-                {
-                    return;
-                }
-
-                terminalTA.setEditable(true);
-                terminalTA.appendText("");
-                if (terminalTA.getText().endsWith("_"))
-                {
-                    terminalTA.deletePreviousChar();
-                    terminalTA.appendText(" ");
-                }
-                else
-                {
-                    terminalTA.deletePreviousChar();
-                    terminalTA.appendText("_");
-                }
-                terminalTA.setEditable(false);
+                caretAction();
             }
         });
         caretTimer.setRepeats(true);
-        //caretTimer.start();
+        caretTimer.setInitialDelay(40);
+        caretTimer.start();
 
         if (button != null)
         {
@@ -114,6 +107,38 @@ public class Terminal implements Initializable
                 }
             });
         }
+
+//        if (myWebView != null)
+//        {
+//            myWebView.setOnKeyTyped(new EventHandler<KeyEvent>() {
+//
+//                @Override
+//                public void handle(KeyEvent arg0)
+//                {
+//                    try
+//                    {
+//                        //System.out.println("Key: " + arg0.getCharacter().getBytes()[0]);
+//                        cpi.sendByte(arg0.getCharacter().getBytes()[0]);
+//                        myWebView.getEngine().loadContent("<!DOCTYPE html>"
+//                                + "<html lang=\"en-US\">"
+//                                + "<head>"
+//                                + "<meta charset=utf-8>"
+//                                + "<style type=\"text/css\">"
+//                                + "p {font-family:\"monospaced\"; font-size:18;}"
+//                                + "</style>"
+//                                + "</head>"
+//                                + "<body>"
+//                                + "<p>" + terminalBuffer + "</p>"
+//                                + "</body>"
+//                                + "</html>");
+//                    }
+//                    catch (IOException ex)
+//                    {
+//                        Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                }
+//            });
+//        }
 
         if (terminalTA != null)
         {
@@ -169,22 +194,54 @@ public class Terminal implements Initializable
         switch (key)
         {
             case 8:
-                //text = text.substring(0, text.length() - 1);
-                terminalTA.setEditable(true);
-                terminalTA.deletePreviousChar();
-                terminalTA.setEditable(false);
+                terminalBuffer = terminalBuffer.substring(0, terminalBuffer.length() - 1);
                 break;
 //            case 13:
-//                //text += "\n";
-//                terminalTA.appendText("\n");
+//                terminalBuffer += "<br>";
+//                terminalBuffer += "\n";
 //                break;
             default:
-                //text += character;
-                terminalTA.appendText(character);
+                terminalBuffer += character;
         }
+        // only restart if this is first character since the timer has fired
+        if (!terminalBufferDirty)
+            caretTimer.restart();
+        terminalBufferDirty = true;
         //terminalTA.setText("");
         //terminalTA.appendText(text + "_");
         //terminalTA.appendText("_");
-        //caretTimer.restart();
+    }
+
+    private void caretAction()
+    {
+        // always service the terminal buffer first before dealing with the cursor
+        if (terminalBufferDirty)
+        {
+            // update the text area and append a blank character to take care of scrolling
+            terminalTA.appendText(terminalBuffer + "_");
+            terminalBuffer = "";
+            terminalBufferDirty = false;
+        }
+        else
+        {
+            if (terminalTA.getSelectedText().length() > 0)
+            {
+                return;
+            }
+
+            terminalTA.setEditable(true);
+            terminalTA.appendText("");
+            if (terminalTA.getText().endsWith("_"))
+            {
+                terminalTA.deletePreviousChar();
+                terminalTA.appendText(" ");
+            }
+            else
+            {
+                terminalTA.deletePreviousChar();
+                terminalTA.appendText("_");
+            }
+            terminalTA.setEditable(false);
+        }
     }
 }
