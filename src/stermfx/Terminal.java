@@ -36,8 +36,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 import javafx.util.Duration;
 import javax.swing.Timer;
 import stermfx.comms.CommPortInterface;
@@ -60,13 +58,15 @@ public class Terminal implements Initializable
     Timer caretTimer;
     CommPortInterface cpi;
     String terminalBuffer;
-    boolean terminalBufferDirty;
+    boolean terminalBufferDirty, caretPresent, deleteNeeded;
 
     @Override
     public void initialize(URL url, ResourceBundle rb)
     {
         terminalBuffer = "";
         terminalBufferDirty = false;
+        caretPresent = false;
+        deleteNeeded = false;
 
         caretTimer = new Timer(500, new ActionListener()
         {
@@ -78,7 +78,7 @@ public class Terminal implements Initializable
             }
         });
         caretTimer.setRepeats(true);
-        caretTimer.setInitialDelay(40);
+        caretTimer.setInitialDelay(100);
         caretTimer.start();
 
         if (button != null)
@@ -142,9 +142,7 @@ public class Terminal implements Initializable
 
         if (terminalTA != null)
         {
-            terminalTA.setOnKeyTyped(new EventHandler<KeyEvent>()
-            {
-
+            terminalTA.setOnKeyTyped(new EventHandler<KeyEvent>() {
                 @Override
                 public void handle(KeyEvent arg0)
                 {
@@ -160,15 +158,20 @@ public class Terminal implements Initializable
                     }
                 }
             });
+//            terminalTA.setOnKeyReleased(new EventHandler<KeyEvent>() {
+//                @Override
+//                public void handle(KeyEvent arg0)
+//                {
+//                    System.out.println("Key: " + arg0.getCode());
+//                }
+//            });
         }
 
-        cpi = new CommPortInterface(new CommRxEvent()
-        {
-
+        cpi = new CommPortInterface(new CommRxEvent() {
             @Override
             public void byteReceived(byte rxByte)
             {
-                addCharacterToTerminal(new String(new byte[] {rxByte}));
+                addCharacterToTerminal(rxByte);
             }
         });
         try
@@ -181,35 +184,25 @@ public class Terminal implements Initializable
         {
             Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
         }
-        //terminalTA.setEditable(true);
     }
 
-    private void addCharacterToTerminal(String character)
+    private void addCharacterToTerminal(byte character)
     {
-        //caretTimer.stop();
-        //String text = terminalTA.getText();
-        //text = text.substring(0, text.length() - 1);
-        //terminalTA.deletePreviousChar();
-        byte key = character.getBytes()[0];
-        switch (key)
+        switch (character)
         {
             case 8:
-                terminalBuffer = terminalBuffer.substring(0, terminalBuffer.length() - 1);
+                deleteNeeded = true;
                 break;
 //            case 13:
 //                terminalBuffer += "<br>";
-//                terminalBuffer += "\n";
 //                break;
             default:
-                terminalBuffer += character;
+                terminalBuffer += (char)character;
         }
         // only restart if this is first character since the timer has fired
         if (!terminalBufferDirty)
             caretTimer.restart();
         terminalBufferDirty = true;
-        //terminalTA.setText("");
-        //terminalTA.appendText(text + "_");
-        //terminalTA.appendText("_");
     }
 
     private void caretAction()
@@ -217,31 +210,44 @@ public class Terminal implements Initializable
         // always service the terminal buffer first before dealing with the cursor
         if (terminalBufferDirty)
         {
-            // update the text area and append a blank character to take care of scrolling
-            terminalTA.appendText(terminalBuffer + "_");
-            terminalBuffer = "";
             terminalBufferDirty = false;
+            if (deleteNeeded)
+            {
+                deleteNeeded = false;
+                int len = terminalTA.getText().length();
+                if (caretPresent)
+                    terminalTA.deleteText(len-2, len);
+                else
+                    terminalTA.deleteText(len-1, len);
+                caretPresent = false;
+            }
+            else
+            {
+                // delete the caret if needed before appending
+                if (caretPresent)
+                    terminalTA.deleteText(terminalTA.getText().length()-1, terminalTA.getText().length());
+                // update the text area and append a blank character to take care of scrolling
+                terminalTA.appendText(terminalBuffer + "_");
+                terminalBuffer = "";
+                caretPresent = true;
+            }
         }
         else
         {
             if (terminalTA.getSelectedText().length() > 0)
-            {
                 return;
-            }
 
-            terminalTA.setEditable(true);
-            terminalTA.appendText("");
-            if (terminalTA.getText().endsWith("_"))
+            if (caretPresent)
             {
-                terminalTA.deletePreviousChar();
-                terminalTA.appendText(" ");
+                terminalTA.appendText("");
+                terminalTA.deleteText(terminalTA.getText().length()-1, terminalTA.getText().length());
+                caretPresent = false;
             }
             else
             {
-                terminalTA.deletePreviousChar();
                 terminalTA.appendText("_");
+                caretPresent = true;
             }
-            terminalTA.setEditable(false);
         }
     }
 }

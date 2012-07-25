@@ -45,6 +45,7 @@ public class sTermFX extends Application
         Parent root = FXMLLoader.load(getClass().getResource("Terminal.fxml"));
 
         primaryStage.setTitle("sTermFX");
+        primaryStage.setOpacity(0.85);
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
