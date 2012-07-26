@@ -11,8 +11,4 @@ build/
 dist/
 
 # User Specific Project Settings #
-nbproject/*
 nbproject/private/
-!nbproject/project.properties
-!nbproject/project.xml
-!nbproject/configurations.xml
