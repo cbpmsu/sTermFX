@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.TooManyListenersException;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.FadeTransition;
@@ -33,6 +34,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
@@ -53,20 +55,20 @@ public class Terminal implements Initializable
     TextArea terminalTA;
     @FXML
     Button button;
-//    @FXML
-//    WebView myWebView;
+    @FXML
+    Accordion settings;
     Timer caretTimer;
     CommPortInterface cpi;
-    String terminalBuffer;
-    boolean terminalBufferDirty, caretPresent, deleteNeeded;
+    volatile String lastTypedCharacter;
+    volatile boolean terminalBufferDirty;
+    Vector<Byte> terminalBuffer;
 
     @Override
     public void initialize(URL url, ResourceBundle rb)
     {
-        terminalBuffer = "";
+        terminalBuffer = new Vector<>();
+        lastTypedCharacter = "";
         terminalBufferDirty = false;
-        caretPresent = false;
-        deleteNeeded = false;
 
         caretTimer = new Timer(500, new ActionListener()
         {
@@ -96,6 +98,7 @@ public class Terminal implements Initializable
                         fadeOut.setFromValue(1.0);
                         fadeOut.setToValue(0.0);
                         fadeOut.play();
+                        terminalTA.setMouseTransparent(true);
                     }
                     else
                     {
@@ -103,42 +106,11 @@ public class Terminal implements Initializable
                         fadeIn.setFromValue(0.0);
                         fadeIn.setToValue(1.0);
                         fadeIn.play();
+                        terminalTA.setMouseTransparent(false);
                     }
                 }
             });
         }
-
-//        if (myWebView != null)
-//        {
-//            myWebView.setOnKeyTyped(new EventHandler<KeyEvent>() {
-//
-//                @Override
-//                public void handle(KeyEvent arg0)
-//                {
-//                    try
-//                    {
-//                        //System.out.println("Key: " + arg0.getCharacter().getBytes()[0]);
-//                        cpi.sendByte(arg0.getCharacter().getBytes()[0]);
-//                        myWebView.getEngine().loadContent("<!DOCTYPE html>"
-//                                + "<html lang=\"en-US\">"
-//                                + "<head>"
-//                                + "<meta charset=utf-8>"
-//                                + "<style type=\"text/css\">"
-//                                + "p {font-family:\"monospaced\"; font-size:18;}"
-//                                + "</style>"
-//                                + "</head>"
-//                                + "<body>"
-//                                + "<p>" + terminalBuffer + "</p>"
-//                                + "</body>"
-//                                + "</html>");
-//                    }
-//                    catch (IOException ex)
-//                    {
-//                        Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
-//                    }
-//                }
-//            });
-//        }
 
         if (terminalTA != null)
         {
@@ -150,7 +122,8 @@ public class Terminal implements Initializable
                     //System.out.println("Key: " + arg0.getCharacter().getBytes()[0]);
                     try
                     {
-                        cpi.sendByte(arg0.getCharacter().getBytes()[0]);
+                        lastTypedCharacter = arg0.getCharacter();
+                        cpi.sendByte(lastTypedCharacter.getBytes()[0]);
                     }
                     catch (IOException ex)
                     {
@@ -179,6 +152,8 @@ public class Terminal implements Initializable
             CommPortSetting cps = new CommPortSetting("CommPort", "COM5");
             cps.setBaudRate(115200);
             cpi.openCommPort(cps);
+            // only make the terminal edittable when the comm port is open
+            terminalTA.setEditable(true);
         }
         catch (PortInUseException | IOException | TooManyListenersException | UnsupportedCommOperationException ex)
         {
@@ -191,18 +166,35 @@ public class Terminal implements Initializable
         switch (character)
         {
             case 8:
-                deleteNeeded = true;
                 break;
 //            case 13:
 //                terminalBuffer += "<br>";
 //                break;
             default:
-                terminalBuffer += (char)character;
+                if (lastTypedCharacter.length() > 0)
+                {
+                    if (lastTypedCharacter.charAt(0) != (char)character)
+                    {
+                        // there's a problem so delete the textarea char and add this one
+                        terminalTA.deletePreviousChar();
+                        //terminalBuffer += (char)character;
+                        terminalBuffer.add(character);
+                        // only restart if this is first character since the timer has fired
+                        if (!terminalBufferDirty)
+                            caretTimer.restart();
+                        terminalBufferDirty = true;
+                    }
+                    lastTypedCharacter = "";
+                }
+                else
+                {
+                    terminalBuffer.add(character);
+                    // only restart if this is first character since the timer has fired
+                    if (!terminalBufferDirty)
+                        caretTimer.restart();
+                    terminalBufferDirty = true;
+                }
         }
-        // only restart if this is first character since the timer has fired
-        if (!terminalBufferDirty)
-            caretTimer.restart();
-        terminalBufferDirty = true;
     }
 
     private void caretAction()
@@ -211,43 +203,11 @@ public class Terminal implements Initializable
         if (terminalBufferDirty)
         {
             terminalBufferDirty = false;
-            if (deleteNeeded)
-            {
-                deleteNeeded = false;
-                int len = terminalTA.getText().length();
-                if (caretPresent)
-                    terminalTA.deleteText(len-2, len);
-                else
-                    terminalTA.deleteText(len-1, len);
-                caretPresent = false;
-            }
-            else
-            {
-                // delete the caret if needed before appending
-                if (caretPresent)
-                    terminalTA.deleteText(terminalTA.getText().length()-1, terminalTA.getText().length());
-                // update the text area and append a blank character to take care of scrolling
-                terminalTA.appendText(terminalBuffer + "_");
-                terminalBuffer = "";
-                caretPresent = true;
-            }
-        }
-        else
-        {
-            if (terminalTA.getSelectedText().length() > 0)
-                return;
-
-            if (caretPresent)
-            {
-                terminalTA.appendText("");
-                terminalTA.deleteText(terminalTA.getText().length()-1, terminalTA.getText().length());
-                caretPresent = false;
-            }
-            else
-            {
-                terminalTA.appendText("_");
-                caretPresent = true;
-            }
+            String tmp = "";
+            while (terminalBuffer.size() > 0)
+                tmp += (char)terminalBuffer.remove(0).byteValue();
+            // update the text area and append a blank character to take care of scrolling
+            terminalTA.appendText(tmp);
         }
     }
 }

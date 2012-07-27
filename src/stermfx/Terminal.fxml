@@ -12,13 +12,33 @@
   <children>
     <VBox alignment="CENTER" prefHeight="600.0" prefWidth="800.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
       <children>
-        <TextArea fx:id="terminalTA" editable="false" prefWidth="200.0" wrapText="true" VBox.vgrow="ALWAYS" />
-        <FlowPane prefHeight="10.0" prefWidth="780.0" VBox.vgrow="SOMETIMES">
+        <ToolBar>
+          <items>
+            <Button fx:id="button" mnemonicParsing="false" text="Test" />
+          </items>
+        </ToolBar>
+        <StackPane prefHeight="150.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
           <children>
-            <Slider />
-            <Button fx:id="button" mnemonicParsing="false" text="Button" />
+            <Accordion fx:id="settings">
+              <expandedPane>
+                <TitledPane fx:id="x1" animated="false" text="untitled">
+                  <content>
+                    <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                  </content>
+                </TitledPane>
+              </expandedPane>
+              <panes>
+                <TitledPane animated="false" text="untitled">
+                  <content>
+                    <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                  </content>
+                </TitledPane>
+                <fx:reference source="x1" />
+              </panes>
+            </Accordion>
+            <TextArea fx:id="terminalTA" editable="false" prefWidth="200.0" wrapText="true" />
           </children>
-        </FlowPane>
+        </StackPane>
       </children>
     </VBox>
   </children>
