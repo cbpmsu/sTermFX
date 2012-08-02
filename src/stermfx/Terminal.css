@@ -27,7 +27,7 @@
 .label {
 	-fx-font-family: "Arial";
     -fx-font-size: 14;
-    -fx-text-fill: rgb(255, 255, 255, 0.4);
+/*    -fx-text-fill: rgb(255, 255, 255, 0.4);*/
     -fx-effect: dropshadow( one-pass-box , rgb(0, 0, 0, 0.6), 0, 0.0 , 0 , 1 );
 }
 
@@ -122,4 +122,10 @@
     	rgb(235, 235, 235, 0.5),
         rgb(0, 0, 0, 0.4),
         rgb(255, 255, 255);
+}
+
+.accordion {
+}
+
+.titled-pane {
 }
