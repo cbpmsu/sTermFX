@@ -19,6 +19,7 @@
 
 package stermfx;
 
+import gnu.io.CommPortIdentifier;
 import gnu.io.PortInUseException;
 import gnu.io.UnsupportedCommOperationException;
 import java.awt.event.ActionListener;
@@ -37,7 +38,9 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.util.Duration;
 import javax.swing.Timer;
 import stermfx.comms.CommPortInterface;
@@ -54,7 +57,9 @@ public class Terminal implements Initializable
     @FXML
     TextArea terminalTA;
     @FXML
-    Button button;
+    AnchorPane terminalAP;
+    @FXML
+    ToggleButton button;
     @FXML
     Accordion settings;
     Timer caretTimer;
@@ -91,22 +96,21 @@ public class Terminal implements Initializable
                 @Override
                 public void handle(ActionEvent event)
                 {
-                    System.out.println(terminalTA.getOpacity());
-                    if (terminalTA.getOpacity() == 1)
+                    if (terminalAP.getOpacity() == 1)
                     {
-                        FadeTransition fadeOut = new FadeTransition(Duration.seconds(1), terminalTA);
+                        FadeTransition fadeOut = new FadeTransition(Duration.seconds(1), terminalAP);
                         fadeOut.setFromValue(1.0);
                         fadeOut.setToValue(0.0);
                         fadeOut.play();
-                        terminalTA.setMouseTransparent(true);
+                        terminalAP.setMouseTransparent(true);
                     }
                     else
                     {
-                        FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), terminalTA);
+                        FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), terminalAP);
                         fadeIn.setFromValue(0.0);
                         fadeIn.setToValue(1.0);
                         fadeIn.play();
-                        terminalTA.setMouseTransparent(false);
+                        terminalAP.setMouseTransparent(false);
                     }
                 }
             });
@@ -147,18 +151,20 @@ public class Terminal implements Initializable
                 addCharacterToTerminal(rxByte);
             }
         });
-        try
-        {
-            CommPortSetting cps = new CommPortSetting("CommPort", "COM5");
-            cps.setBaudRate(115200);
-            cpi.openCommPort(cps);
-            // only make the terminal edittable when the comm port is open
-            terminalTA.setEditable(true);
-        }
-        catch (PortInUseException | IOException | TooManyListenersException | UnsupportedCommOperationException ex)
-        {
-            Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+        CommPortInterface.listPorts();
+//        try
+//        {
+//            CommPortSetting cps = new CommPortSetting("CommPort", "COM5");
+//            cps.setBaudRate(115200);
+//            cpi.openCommPort(cps);
+//            // only make the terminal edittable when the comm port is open
+//            terminalTA.setEditable(true);
+//        }
+//        catch (PortInUseException | IOException | TooManyListenersException | UnsupportedCommOperationException ex)
+//        {
+//            Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     private void addCharacterToTerminal(byte character)
@@ -209,5 +215,12 @@ public class Terminal implements Initializable
             // update the text area and append a blank character to take care of scrolling
             terminalTA.appendText(tmp);
         }
+    }
+
+    private void loadSerialPortSettings()
+    {
+        // read the available system ports
+        java.util.Enumeration<CommPortIdentifier> portEnum = CommPortIdentifier.getPortIdentifiers();
+        // get the 
     }
 }

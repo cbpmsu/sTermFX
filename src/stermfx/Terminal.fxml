@@ -3,25 +3,36 @@
 <?import java.lang.*?>
 <?import java.net.*?>
 <?import javafx.collections.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.effect.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
 <AnchorPane id="AnchorPane" prefHeight="600.0" prefWidth="800.0" styleClass="background" xmlns:fx="http://javafx.com/fxml" fx:controller="stermfx.Terminal">
   <children>
-    <VBox alignment="CENTER" prefHeight="600.0" prefWidth="800.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+    <VBox alignment="CENTER" prefHeight="600.0" prefWidth="800.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
         <ToolBar>
           <items>
-            <Button fx:id="button" mnemonicParsing="false" text="Test" />
+            <ToggleButton fx:id="button" mnemonicParsing="false" text="Settings">
+              <effect>
+                <DropShadow blurType="GAUSSIAN" />
+              </effect>
+            </ToggleButton>
           </items>
         </ToolBar>
         <StackPane prefHeight="150.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
           <children>
             <Accordion fx:id="settings">
-              <expandedPane>
+              <panes>
+                <TitledPane expanded="false" text="Application Settings">
+                  <content>
+                    <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" styleClass="background" />
+                  </content>
+                </TitledPane>
                 <TitledPane fx:id="x1" animated="false" text="Serial Port Settings">
                   <content>
                     <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" styleClass="background">
@@ -30,8 +41,23 @@
                           <children>
                             <GridPane prefHeight="262.0" prefWidth="362.0">
                               <children>
-                                <Label alignment="CENTER" prefWidth="119.0" text="Comm Port" textAlignment="RIGHT" textFill="#dfdfdf" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0" GridPane.valignment="CENTER" />
-                                <ComboBox prefHeight="21.0" prefWidth="124.0" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="0" GridPane.valignment="CENTER">
+                                <Label alignment="CENTER" prefWidth="119.0" text="Comm Port" textAlignment="RIGHT" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0" GridPane.valignment="CENTER">
+                                  <effect>
+                                    <Bloom />
+                                  </effect>
+                                  <textFill>
+                                    <Color blue="0.875" green="0.875" red="0.875" fx:id="x2" />
+                                  </textFill>
+                                </Label>
+                                <Label alignment="CENTER" prefWidth="119.0" text="Data Bits" textAlignment="RIGHT" textFill="$x2" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                  <effect>
+                                    <Bloom />
+                                  </effect>
+                                </Label>
+                                <ChoiceBox GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                  <effect>
+                                    <Reflection />
+                                  </effect>
                                   <items>
                                     <FXCollections fx:factory="observableArrayList">
                                       <String fx:value="Item 1" />
@@ -39,13 +65,53 @@
                                       <String fx:value="Item 3" />
                                     </FXCollections>
                                   </items>
-                                </ComboBox>
+                                </ChoiceBox>
+                                <GridPane GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                  <children>
+                                    <RadioButton mnemonicParsing="false" text="8" textFill="WHITE" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                      <effect>
+                                        <DropShadow color="#bfbfbf" />
+                                      </effect>
+                                      <font>
+                                        <Font name="Arial" size="14.0" fx:id="x3" />
+                                      </font>
+                                    </RadioButton>
+                                    <RadioButton font="$x3" mnemonicParsing="false" text="5" textFill="WHITE" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                      <effect>
+                                        <DropShadow>
+                                          <color>
+                                            <Color blue="0.749" green="0.749" red="0.749" fx:id="x4" />
+                                          </color>
+                                        </DropShadow>
+                                      </effect>
+                                    </RadioButton>
+                                    <RadioButton font="$x3" mnemonicParsing="false" text="6" textFill="WHITE" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                      <effect>
+                                        <DropShadow color="$x4" />
+                                      </effect>
+                                    </RadioButton>
+                                    <RadioButton font="$x3" mnemonicParsing="false" text="7" textFill="WHITE" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                      <effect>
+                                        <DropShadow color="$x4" />
+                                      </effect>
+                                    </RadioButton>
+                                  </children>
+                                  <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="89.0" minWidth="10.0" prefWidth="54.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="127.0" minWidth="10.0" prefWidth="127.0" />
+                                  </columnConstraints>
+                                  <rowConstraints>
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                  </rowConstraints>
+                                </GridPane>
                               </children>
                               <columnConstraints>
-                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                               </columnConstraints>
                               <rowConstraints>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -57,18 +123,21 @@
                     </AnchorPane>
                   </content>
                 </TitledPane>
-              </expandedPane>
-              <panes>
-                <TitledPane animated="false" text="Application Settings">
-                  <content>
-                    <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" styleClass="background" />
-                  </content>
-                </TitledPane>
-                <fx:reference source="x1" />
               </panes>
             </Accordion>
-            <TextArea fx:id="terminalTA" editable="false" prefWidth="200.0" wrapText="true" />
+            <AnchorPane fx:id="terminalAP" prefHeight="200.0" prefWidth="200.0" styleClass="background">
+              <children>
+                <VBox prefHeight="562.0" prefWidth="800.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                  <children>
+                    <TextArea fx:id="terminalTA" editable="false" prefWidth="200.0" wrapText="true" VBox.vgrow="SOMETIMES" />
+                  </children>
+                </VBox>
+              </children>
+            </AnchorPane>
           </children>
+          <VBox.margin>
+            <Insets />
+          </VBox.margin>
         </StackPane>
       </children>
     </VBox>
