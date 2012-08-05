@@ -42,10 +42,12 @@ public class sTermFX extends Application
     @Override
     public void start(final Stage primaryStage) throws Exception
     {
-        Parent root = FXMLLoader.load(getClass().getResource("Terminal.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Terminal.fxml"));
+        Parent root = (Parent)fxmlLoader.load();
+        final Terminal controller = (Terminal)fxmlLoader.getController();
 
         primaryStage.setTitle("sTermFX");
-        primaryStage.setOpacity(0.85);
+        //primaryStage.setOpacity(0.85);
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
@@ -54,6 +56,9 @@ public class sTermFX extends Application
             @Override
             public void handle(WindowEvent arg0)
             {
+                // do any cleanup in the terminal class
+                controller.doCleanUp();
+                // exit the system
                 System.exit(0);
             }
         });

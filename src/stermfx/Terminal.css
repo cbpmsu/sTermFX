@@ -7,7 +7,7 @@
 */
 
 .background {
-    -fx-background-image: url("CoarseGrid.png");
+    -fx-background-image: url("resources/CoarseGrid.png");
     -fx-background-repeat: repeat;
 	-fx-background-color:
         linear-gradient(#38424b 0%, #1f2429 20%, #191d22 100%),

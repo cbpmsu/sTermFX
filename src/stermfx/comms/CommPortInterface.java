@@ -78,7 +78,7 @@ public class CommPortInterface implements SerialPortEventListener
      * @throws TooManyListenersException too many registered serial event listeners
      * @throws UnsupportedCommOperationException comm operation is not supported
      */
-    public void openCommPort(CommPortSetting cp) throws PortInUseException,
+    public void openCommPort(CommPort cp) throws PortInUseException,
                                                         IOException,
                                                         TooManyListenersException,
                                                         UnsupportedCommOperationException
@@ -104,11 +104,11 @@ public class CommPortInterface implements SerialPortEventListener
                     serialPort.addEventListener(this);
                     serialPort.notifyOnDataAvailable(true);
                     //serialPort.notifyOnOutputEmpty(true);
-                    serialPort.setSerialPortParams(cp.getBaudRate(),
-                            cp.getDataBits(),
-                            cp.getStopBits(),
-                            cp.getParity());
-                    serialPort.setFlowControlMode(cp.getFlowControl());
+                    serialPort.setSerialPortParams(Integer.parseInt(cp.getBaudRate()),
+                            cp.getDataBitsRaw(),
+                            cp.getStopBitsRaw(),
+                            cp.getParityRaw());
+                    serialPort.setFlowControlMode(cp.getFlowControlRaw());
                 }
             }
         }
@@ -118,6 +118,19 @@ public class CommPortInterface implements SerialPortEventListener
         }
 
         portOpen = true;
+    }
+
+    /**
+     * Closes the communications port
+     *
+     * @throws IOException a general I/O exception occured at the lower levels
+     */
+    public void closeCommPort() throws IOException
+    {
+        portOpen = false;
+        serialPort.close();
+        inputStream.close();
+        outputStream.close();
     }
 
     @Override
