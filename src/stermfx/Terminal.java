@@ -16,10 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 package stermfx;
 
 import gnu.io.CommPortIdentifier;
+import gnu.io.PortInUseException;
+import gnu.io.UnsupportedCommOperationException;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,19 +29,18 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.TooManyListenersException;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.FadeTransition;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Accordion;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.util.Duration;
@@ -66,7 +66,15 @@ public class Terminal implements Initializable
     @FXML
     ChoiceBox commPortCB;
     @FXML
+    TextField baudRateTF;
+    @FXML
     ToggleGroup dataBitsGroup = new ToggleGroup();
+    @FXML
+    ToggleGroup stopBitsGroup = new ToggleGroup();
+    @FXML
+    ChoiceBox parityCB;
+    @FXML
+    ChoiceBox flowControlCB;
 
     private Timer charTimer;
     private CommPort commPort;
@@ -74,10 +82,10 @@ public class Terminal implements Initializable
     private volatile boolean terminalBufferDirty;
     private Vector<Byte> terminalBuffer;
     private Properties sysSettings;
-    private static final File SYS_SETTINGS_FILE = new File(System.getProperty("user.home") + File.separator +
-                                                         ".stermfx" + File.separator + "syssettings.properties");
-    private static final String COMM_SETTINGS_FILENAME = System.getProperty("user.home") + File.separator +
-                                                         ".stermfx" + File.separator + "commsettings.properties";
+    private static final File SYS_SETTINGS_FILE = new File(System.getProperty("user.home") + File.separator
+            + ".stermfx" + File.separator + "syssettings.properties");
+    private static final String COMM_SETTINGS_FILENAME = System.getProperty("user.home") + File.separator
+            + ".stermfx" + File.separator + "commsettings.properties";
 
     @Override
     public void initialize(URL url, ResourceBundle rb)
@@ -87,33 +95,42 @@ public class Terminal implements Initializable
         lastTypedCharacter = "";
         terminalBufferDirty = false;
 
-        // create comm port object
-        CommRxEvent rxEvent = new CommRxEvent() {
+        // create the receive event
+        CommRxEvent rxEvent = new CommRxEvent()
+        {
+
             @Override
             public void byteReceived(byte rxByte)
             {
                 addCharacterToTerminal(rxByte);
             }
         };
-        commPort = new CommPort(rxEvent, COMM_SETTINGS_FILENAME);
+
+        // create comm port object
+        try
+        {
+            commPort = new CommPort(rxEvent, COMM_SETTINGS_FILENAME);
+        }
+        catch (IOException ex)
+        {
+            Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         // load the system settings
         loadSystemSettings();
         // init the UI controls
         initUI();
 
-//        try
-//        {
-//            CommPort cps = new CommPort("CommPort", "COM5");
-//            cps.setBaudRate(115200);
-//            cpi.openCommPort(cps);
-//            // only make the terminal edittable when the comm port is open
-//            terminalTA.setEditable(true);
-//        }
-//        catch (PortInUseException | IOException | TooManyListenersException | UnsupportedCommOperationException ex)
-//        {
-//            Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+        try
+        {
+            commPort.commPortInterface().openCommPort(commPort);
+            // only make the terminal edittable when the comm port is open
+            terminalTA.setEditable(true);
+        }
+        catch (PortInUseException | IOException | TooManyListenersException | UnsupportedCommOperationException ex)
+        {
+            Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void addCharacterToTerminal(byte character)
@@ -128,7 +145,7 @@ public class Terminal implements Initializable
             default:
                 if (lastTypedCharacter.length() > 0)
                 {
-                    if (lastTypedCharacter.charAt(0) != (char)character)
+                    if (lastTypedCharacter.charAt(0) != (char) character)
                     {
                         // there's a problem so delete the textarea char and add this one
                         terminalTA.deletePreviousChar();
@@ -136,7 +153,9 @@ public class Terminal implements Initializable
                         terminalBuffer.add(character);
                         // only restart if this is first character since the timer has fired
                         if (!terminalBufferDirty)
+                        {
                             charTimer.restart();
+                        }
                         terminalBufferDirty = true;
                     }
                     lastTypedCharacter = "";
@@ -146,7 +165,9 @@ public class Terminal implements Initializable
                     terminalBuffer.add(character);
                     // only restart if this is first character since the timer has fired
                     if (!terminalBufferDirty)
+                    {
                         charTimer.restart();
+                    }
                     terminalBufferDirty = true;
                 }
         }
@@ -160,7 +181,9 @@ public class Terminal implements Initializable
             terminalBufferDirty = false;
             String tmp = "";
             while (terminalBuffer.size() > 0)
-                tmp += (char)terminalBuffer.remove(0).byteValue();
+            {
+                tmp += (char) terminalBuffer.remove(0).byteValue();
+            }
             // update the text area and append a blank character to take care of scrolling
             terminalTA.appendText(tmp);
         }
@@ -168,12 +191,14 @@ public class Terminal implements Initializable
 
     private void loadSystemSettings()
     {
-        try {
+        try
+        {
             // load the default and last saved settings
             Properties defaultProps = new Properties();
             defaultProps.load(getClass().getResourceAsStream("/stermfx/resources/sysdefaults.properties"));
             sysSettings = new Properties(defaultProps);
-            if (SYS_SETTINGS_FILE.exists()) {
+            if (SYS_SETTINGS_FILE.exists())
+            {
                 try (FileInputStream in = new FileInputStream(SYS_SETTINGS_FILE))
                 {
                     sysSettings.load(in);
@@ -183,13 +208,42 @@ public class Terminal implements Initializable
             java.util.Enumeration<CommPortIdentifier> portEnum = CommPortIdentifier.getPortIdentifiers();
             // setup the selection values for the comm port name
             commPortCB.getItems().clear();
-            while (portEnum.hasMoreElements()) {
+            while (portEnum.hasMoreElements())
+            {
                 CommPortIdentifier element = portEnum.nextElement();
                 if (element.getPortType() == CommPortIdentifier.PORT_SERIAL)
+                {
                     commPortCB.getItems().add(element.getName());
+                }
             }
             commPortCB.getSelectionModel().select(commPort.getCommPortName());
-        } catch (IOException ioex) {
+            // the saved port may no longer be available on this system
+            if (commPortCB.getSelectionModel().getSelectedIndex() < 0)
+            {
+                commPortCB.getSelectionModel().selectFirst();
+                commPort.setCommPortName((String)commPortCB.getSelectionModel().getSelectedItem());
+            }
+            // set the baud rate
+            baudRateTF.setText(commPort.getBaudRate());
+            // find the toggle object that matches the current data bits settigstng
+            for (Toggle current : dataBitsGroup.getToggles())
+                if (((ToggleButton)current).getText().equals(commPort.getDataBits()))
+                    dataBitsGroup.selectToggle(current);
+            // find the toggle object that matches the current stop bits setting
+            for (Toggle current : stopBitsGroup.getToggles())
+                if (((ToggleButton)current).getText().equals(commPort.getStopBits()))
+                    stopBitsGroup.selectToggle(current);
+            // setup the parity choicebox settings
+            parityCB.getItems().clear();
+            parityCB.getItems().addAll("None", "Odd", "Even", "Mark", "Space");
+            parityCB.getSelectionModel().select(commPort.getParity());
+            // setup the flow control choicebox settings
+            flowControlCB.getItems().clear();
+            flowControlCB.getItems().addAll("None", "RtsCts In", "RtsCts Out", "XonXoff In", "XonXoff Out");
+            flowControlCB.getSelectionModel().select(commPort.getFlowControl());
+        }
+        catch (IOException ioex)
+        {
             Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ioex);
         }
     }
@@ -198,8 +252,27 @@ public class Terminal implements Initializable
     {
         // setup bindings for serial port settings UI controls
         commPort.commPortNameProperty().bindBidirectional(commPortCB.valueProperty());
+        commPort.baudRateProperty().bindBidirectional(baudRateTF.textProperty());
+        dataBitsGroup.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+
+            @Override
+            public void changed(ObservableValue<? extends Toggle> arg0, Toggle arg1, Toggle arg2)
+            {
+                commPort.setDataBits(((ToggleButton)arg2).getText());
+                System.out.println(commPort);
+            }
+        });
+        stopBitsGroup.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+
+            @Override
+            public void changed(ObservableValue<? extends Toggle> arg0, Toggle arg1, Toggle arg2)
+            {
+                commPort.setStopBits(((ToggleButton)arg2).getText());
+            }
+        });
+        commPort.parityProperty().bindBidirectional(parityCB.valueProperty());
+        commPort.flowControlProperty().bindBidirectional(flowControlCB.valueProperty());
         //commPort.dataBitsProperty().bindBidirectional(dataBitsGroup.selectedToggleProperty());
-        System.out.println(commPort);
 
         // setup a timer regulate how fast characters are added to the text area
         // without this the runLater queue would get flooded
@@ -246,7 +319,9 @@ public class Terminal implements Initializable
 
         if (terminalTA != null)
         {
-            terminalTA.setOnKeyTyped(new EventHandler<KeyEvent>() {
+            terminalTA.setOnKeyTyped(new EventHandler<KeyEvent>()
+            {
+
                 @Override
                 public void handle(KeyEvent arg0)
                 {
@@ -275,14 +350,20 @@ public class Terminal implements Initializable
 
     public void doCleanUp()
     {
-        try {
+        try
+        {
             // close the comm port if open
             if (commPort.commPortInterface().isPortOpen())
+            {
                 commPort.commPortInterface().closeCommPort();
-        } catch (IOException ioex) {
+            }
+        }
+        catch (IOException ioex)
+        {
             Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ioex);
         }
-        try {
+        try
+        {
             // create the system settings file if it doesn't exist
             if (!SYS_SETTINGS_FILE.exists())
             {
@@ -294,7 +375,11 @@ public class Terminal implements Initializable
             {
                 sysSettings.store(out, "---sTermFX Settings---");
             }
-        } catch (IOException ioex) {
+            // save the comm port settings
+            commPort.saveSettings();
+        }
+        catch (IOException ioex)
+        {
             Logger.getLogger(Terminal.class.getName()).log(Level.SEVERE, null, ioex);
         }
     }

@@ -56,7 +56,7 @@ public class sTermFX extends Application
             @Override
             public void handle(WindowEvent arg0)
             {
-                // do any cleanup in the terminal class
+                // do any cleanup in the terminal controller
                 controller.doCleanUp();
                 // exit the system
                 System.exit(0);

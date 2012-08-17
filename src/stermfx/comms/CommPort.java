@@ -20,7 +20,12 @@
 package stermfx.comms;
 
 import gnu.io.SerialPort;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Locale;
+import java.util.Properties;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
@@ -40,37 +45,37 @@ public class CommPort {
     /**
      * A text description of the communications port
      */
-    private SimpleStringProperty description = new SimpleStringProperty("Default Device");
+    private SimpleStringProperty description = new SimpleStringProperty("");
 
     /**
      * The communications port name that is usually OS specific (COM1, dev/ttys0)
      */
-    private SimpleStringProperty commPortName = new SimpleStringProperty("None Found!");
+    private SimpleStringProperty commPortName = new SimpleStringProperty("");
 
     /**
      * The communications port's baud rate setting
      */
-    private SimpleStringProperty baudRate = new SimpleStringProperty("115200");
+    private SimpleStringProperty baudRate = new SimpleStringProperty("");
 
     /**
      * The communications port's number of data bits setting
      */
-    private SimpleStringProperty dataBits = new SimpleStringProperty("8");
+    private SimpleStringProperty dataBits = new SimpleStringProperty("");
 
     /**
      * The communications port's number of stop bits setting
      */
-    private SimpleStringProperty stopBits = new SimpleStringProperty("1");
+    private SimpleStringProperty stopBits = new SimpleStringProperty("");
 
     /**
      * The communications port's parity setting
      */
-    private SimpleStringProperty parity = new SimpleStringProperty("none");
+    private SimpleStringProperty parity = new SimpleStringProperty("");
 
     /**
      * The communications port's flow control setting
      */
-    private SimpleStringProperty flowControl = new SimpleStringProperty("none");
+    private SimpleStringProperty flowControl = new SimpleStringProperty("");
 
     /**
      * The comm port interface object
@@ -78,13 +83,67 @@ public class CommPort {
     private CommPortInterface cpi = null;
 
     /**
+     * The persistent settings for this comm port object
+     */
+    private Properties commSettings;
+    private File commSettingsFile;
+
+    /**
      * Creates a new instance of CommPort
      */
-    public CommPort(CommRxEvent rxEvent, String propertiesLocation) {
+    public CommPort(CommRxEvent rxEvent, String propertiesLocation) throws IOException{
         // create the comm port interface
         cpi = new CommPortInterface(rxEvent);
         // load the settings
-        commPortName.setValue("COM4");
+        commSettingsFile = new File(propertiesLocation);
+        Properties defaultProps = new Properties();
+        defaultProps.load(getClass().getResourceAsStream("commdefaults.properties"));
+        commSettings = new Properties(defaultProps);
+        if (commSettingsFile.exists()) {
+            try (FileInputStream in = new FileInputStream(commSettingsFile))
+            {
+                commSettings.load(in);
+            }
+        }
+        // setup the class members
+        description.setValue(commSettings.getProperty("description", "Undefined"));
+        commPortName.setValue(commSettings.getProperty("comm.port.name"));
+        baudRate.setValue(commSettings.getProperty("baud.rate"));
+        dataBits.setValue(commSettings.getProperty("data.bits"));
+        stopBits.setValue(commSettings.getProperty("stop.bits"));
+        parity.setValue(commSettings.getProperty("parity"));
+        flowControl.setValue(commSettings.getProperty("flow.control"));
+
+        //commPortName.setValue("COM14");
+    }
+
+    /**
+     * Saves the persistent settings of this comm port to the specified properties
+     * location.
+     *
+     * @throws IOException If a problem occurs while trying to store the properties file.
+     */
+    public void saveSettings() throws IOException {
+        // save the class members to local settings
+        commSettings.setProperty("description", getDescription());
+        commSettings.setProperty("comm.port.name", getCommPortName());
+        commSettings.setProperty("baud.rate", getBaudRate());
+        commSettings.setProperty("data.bits", getDataBits());
+        commSettings.setProperty("flow.control", getFlowControl());
+        commSettings.setProperty("parity", getParity());
+        commSettings.setProperty("stop.bits", getStopBits());
+
+        // create the comm settings file if it doesn't exist
+        if (!commSettingsFile.exists())
+        {
+            commSettingsFile.getParentFile().mkdirs();
+            commSettingsFile.createNewFile();
+        }
+        // store the comm settings
+        try (FileOutputStream out = new FileOutputStream(commSettingsFile))
+        {
+            commSettings.store(out, "---CommPort Settings---");
+        }
     }
 
     /**
