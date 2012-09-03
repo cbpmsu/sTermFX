@@ -60,19 +60,23 @@
                   <content>
                     <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" styleClass="background">
                       <children>
-                        <FlowPane prefHeight="496.0" prefWidth="776.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <VBox id="VBox" alignment="CENTER_LEFT" spacing="20.0">
                           <children>
                             <GridPane vgap="15.0">
                               <children>
                                 <Label alignment="CENTER" text="Comm Port" textAlignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="0">
                                   <effect>
-                                    <Bloom fx:id="x5" />
+                                    <Bloom />
                                   </effect>
                                   <textFill>
                                     <Color blue="0.875" green="0.875" red="0.875" fx:id="x2" />
                                   </textFill>
                                 </Label>
-                                <Label alignment="CENTER" effect="$x5" text="Data Bits" textAlignment="RIGHT" textFill="$x2" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <Label alignment="CENTER" text="Data Bits" textAlignment="RIGHT" textFill="$x2" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                  <effect>
+                                    <Bloom fx:id="x5" />
+                                  </effect>
+                                </Label>
                                 <ChoiceBox fx:id="commPortCB" GridPane.columnIndex="1" GridPane.rowIndex="0">
                                   <effect>
                                     <Reflection />
@@ -185,26 +189,29 @@
                                     </FXCollections>
                                   </items>
                                 </ChoiceBox>
-                                <Label alignment="CENTER" text="Flow Control" textAlignment="RIGHT" textFill="$x2" GridPane.columnIndex="0" GridPane.rowIndex="5">
+                                <Label alignment="CENTER_RIGHT" contentDisplay="RIGHT" prefWidth="130.0" text="Flow Control" textAlignment="RIGHT" textFill="$x2" GridPane.columnIndex="0" GridPane.rowIndex="5">
                                   <effect>
                                     <Bloom />
                                   </effect>
+                                  <labelFor>
+                                    <ChoiceBox id="commPortCB" fx:id="flowControlCB" GridPane.columnIndex="1" GridPane.rowIndex="5">
+                                      <effect>
+                                        <Reflection />
+                                      </effect>
+                                      <items>
+                                        <FXCollections fx:factory="observableArrayList">
+                                          <String fx:value="Item 1" />
+                                          <String fx:value="Item 2" />
+                                          <String fx:value="Item 3" />
+                                        </FXCollections>
+                                      </items>
+                                    </ChoiceBox>
+                                  </labelFor>
                                 </Label>
-                                <ChoiceBox id="commPortCB" fx:id="flowControlCB" GridPane.columnIndex="1" GridPane.rowIndex="5">
-                                  <effect>
-                                    <Reflection />
-                                  </effect>
-                                  <items>
-                                    <FXCollections fx:factory="observableArrayList">
-                                      <String fx:value="Item 1" />
-                                      <String fx:value="Item 2" />
-                                      <String fx:value="Item 3" />
-                                    </FXCollections>
-                                  </items>
-                                </ChoiceBox>
+                                <fx:reference source="flowControlCB" />
                               </children>
                               <columnConstraints>
-                                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" prefWidth="150.0" />
+                                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" prefWidth="100.0" />
                                 <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="150.0" />
                               </columnConstraints>
                               <padding>
@@ -218,12 +225,17 @@
                                 <RowConstraints minHeight="10.0" prefHeight="40.0" valignment="TOP" vgrow="SOMETIMES" />
                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                               </rowConstraints>
-                              <FlowPane.margin>
-                                <Insets />
-                              </FlowPane.margin>
                             </GridPane>
+                            <CheckBox mnemonicParsing="false" text="Attempt to automatically open port when application starts up" textFill="$x2">
+                              <effect>
+                                <Reflection />
+                              </effect>
+                            </CheckBox>
                           </children>
-                        </FlowPane>
+                          <padding>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                          </padding>
+                        </VBox>
                       </children>
                     </AnchorPane>
                   </content>

@@ -227,12 +227,20 @@ public class Terminal implements Initializable
             baudRateTF.setText(commPort.getBaudRate());
             // find the toggle object that matches the current data bits settigstng
             for (Toggle current : dataBitsGroup.getToggles())
+            {
                 if (((ToggleButton)current).getText().equals(commPort.getDataBits()))
+                {
                     dataBitsGroup.selectToggle(current);
+                }
+            }
             // find the toggle object that matches the current stop bits setting
             for (Toggle current : stopBitsGroup.getToggles())
+            {
                 if (((ToggleButton)current).getText().equals(commPort.getStopBits()))
+                {
                     stopBitsGroup.selectToggle(current);
+                }
+            }
             // setup the parity choicebox settings
             parityCB.getItems().clear();
             parityCB.getItems().addAll("None", "Odd", "Even", "Mark", "Space");
